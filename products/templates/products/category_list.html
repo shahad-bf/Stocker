@@ -1,0 +1,99 @@
+{% extends 'dashboard/base.html' %}
+{% load humanize %}
+
+{% block title %}Categories - Inventory Plus{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-0">
+                        <i class="bi bi-tags me-2 text-primary"></i>
+                        Categories
+                    </h1>
+                    <p class="text-muted mb-0">Organize your products by categories</p>
+                </div>
+                <div>
+                    {% if user.profile.is_admin %}
+                    <a href="{% url 'products:category_add' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i>Add Category
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categories Grid -->
+    <div class="row">
+        {% for category in categories %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm animate__animated animate__fadeInUp" style="animation-delay: {{ forloop.counter0|add:1 }}00ms;">
+                {% if category.image %}
+                    <img src="{{ category.image.url }}" 
+                         class="card-img-top" 
+                         alt="{{ category.name }}"
+                         style="height: 200px; object-fit: cover;">
+                {% else %}
+                    <div class="card-img-top bg-gradient d-flex align-items-center justify-content-center" 
+                         style="height: 200px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="bi bi-tags display-1 text-white"></i>
+                    </div>
+                {% endif %}
+                
+                <div class="card-body">
+                    <h5 class="card-title">{{ category.name }}</h5>
+                    {% if category.description %}
+                        <p class="card-text">{{ category.description|truncatewords:20 }}</p>
+                    {% else %}
+                        <p class="card-text text-muted">No description available</p>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge bg-primary">{{ category.products_count }} products</span>
+                            {% if category.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </div>
+                        <small class="text-muted">{{ category.created_at|date:"M d, Y" }}</small>
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-transparent">
+                    <div class="btn-group w-100" role="group">
+                        <a href="{% url 'products:product_list' %}?category={{ category.id }}" 
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye me-1"></i>View Products
+                        </a>
+                        {% if user.profile.is_admin %}
+                        <a href="{% url 'products:category_edit' category.pk %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-pencil me-1"></i>Edit
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="bi bi-tags display-1 text-muted mb-3"></i>
+                <h4 class="text-muted">No Categories Found</h4>
+                <p class="text-muted">Start by creating your first product category.</p>
+                {% if user.profile.is_admin %}
+                <a href="{% url 'products:category_add' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>Create First Category
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

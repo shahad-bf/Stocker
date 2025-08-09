@@ -1,0 +1,219 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Delete Product - {{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 bg-gradient-danger text-white animate__animated animate__fadeInDown">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h2 mb-0">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                Delete Product
+                            </h1>
+                            <p class="mb-0 opacity-75">Confirm product deletion</p>
+                        </div>
+                        <div class="text-end">
+                            <a href="{% url 'products:product_list' %}" class="btn btn-light">
+                                <i class="bi bi-arrow-left me-1"></i>Back to Products
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Card -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm animate__animated animate__fadeInUp">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Confirm Deletion
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Product Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            {% if product.image %}
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}" 
+                                     class="img-fluid rounded shadow-sm">
+                            {% else %}
+                                <div class="bg-light rounded d-flex align-items-center justify-content-center" 
+                                     style="height: 200px;">
+                                    <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-8">
+                            <h4 class="text-danger mb-3">{{ product.name }}</h4>
+                            
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <p><strong>SKU:</strong> {{ product.sku }}</p>
+                                    <p><strong>Category:</strong> {{ product.category.name }}</p>
+                                    <p><strong>Current Stock:</strong> 
+                                        <span class="badge bg-{% if product.stock_quantity == 0 %}danger{% elif product.is_low_stock %}warning{% else %}success{% endif %}">
+                                            {{ product.stock_quantity }} {{ product.get_unit_display }}
+                                        </span>
+                                    </p>
+                                </div>
+                                <div class="col-sm-6">
+                                    <p><strong>Unit Price:</strong> {{ product.unit_price }} SAR</p>
+                                    <p><strong>Stock Value:</strong> {{ product.stock_value|floatformat:2 }} SAR</p>
+                                    <p><strong>Created:</strong> {{ product.created_at|naturaltime }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Warning Messages -->
+                    <div class="alert alert-warning mb-4">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            Important Information
+                        </h6>
+                        <ul class="mb-0">
+                            {% if product.stock_movements.exists %}
+                            <li><strong>This product has stock movement history.</strong> It will be marked as inactive instead of being permanently deleted.</li>
+                            {% else %}
+                            <li><strong>This product will be permanently deleted.</strong> This action cannot be undone.</li>
+                            {% endif %}
+                            
+                            {% if product.stock_quantity > 0 %}
+                            <li><strong>Current stock:</strong> {{ product.stock_quantity }} {{ product.get_unit_display }} (value: {{ product.stock_value|floatformat:2 }} SAR)</li>
+                            {% endif %}
+                            
+                            {% if product.notification_set.exists %}
+                            <li><strong>Related notifications:</strong> {{ product.notification_set.count }} notification(s) will be affected.</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+
+                    <!-- Stock Movement History -->
+                    {% if product.stock_movements.exists %}
+                    <div class="alert alert-info mb-4">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-clock-history me-2"></i>
+                            Stock Movement History
+                        </h6>
+                        <p class="mb-2">This product has <strong>{{ product.stock_movements.count }}</strong> stock movement record(s).</p>
+                        <p class="mb-0">
+                            <small class="text-muted">
+                                Last movement: {{ product.stock_movements.first.created_at|naturaltime }}
+                            </small>
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Confirmation Form -->
+                    <div class="border-top pt-4">
+                        <form method="post" class="d-flex justify-content-between align-items-center">
+                            {% csrf_token %}
+                            
+                            <div>
+                                <a href="{% url 'product_detail' product.pk %}" class="btn btn-secondary me-2">
+                                    <i class="bi bi-arrow-left me-1"></i>Cancel
+                                </a>
+                                <a href="{% url 'products:product_list' %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-list me-1"></i>Back to List
+                                </a>
+                            </div>
+
+                            <div>
+                                {% if product.stock_movements.exists %}
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="bi bi-eye-slash me-1"></i>
+                                    Deactivate Product
+                                </button>
+                                {% else %}
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="bi bi-trash me-1"></i>
+                                    Delete Permanently
+                                </button>
+                                {% endif %}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Additional Confirmation Modal -->
+<div class="modal fade" id="finalConfirmModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Final Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Are you absolutely sure you want to 
+                    {% if product.stock_movements.exists %}
+                        <strong>deactivate</strong>
+                    {% else %}
+                        <strong>permanently delete</strong>
+                    {% endif %}
+                    this product?
+                </p>
+                <div class="alert alert-light">
+                    <strong>{{ product.name }}</strong><br>
+                    <small class="text-muted">SKU: {{ product.sku }}</small>
+                </div>
+                {% if not product.stock_movements.exists %}
+                <p class="text-danger mb-0">
+                    <small><i class="bi bi-exclamation-triangle me-1"></i>This action cannot be undone!</small>
+                </p>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    {% if product.stock_movements.exists %}
+                        Deactivate
+                    {% else %}
+                        Delete Permanently
+                    {% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form[method="post"]');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const modal = new bootstrap.Modal(document.getElementById('finalConfirmModal'));
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    
+    // Intercept form submission
+    submitBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        modal.show();
+    });
+    
+    // Handle final confirmation
+    confirmBtn.addEventListener('click', function() {
+        modal.hide();
+        form.submit();
+    });
+});
+</script>
+{% endblock %}
