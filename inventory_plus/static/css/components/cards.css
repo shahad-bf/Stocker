@@ -1,0 +1,215 @@
+/* Card Components - Inventory Plus */
+
+.card {
+    border: none;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-md);
+    transition: var(--transition-normal);
+    overflow: hidden;
+    background: white;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.card-header {
+    background: var(--gradient-primary);
+    color: white;
+    border: none;
+    font-weight: var(--font-weight-semibold);
+    padding: var(--spacing-md) var(--spacing-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.card-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+}
+
+.card:hover .card-header::before {
+    transform: translateX(100%);
+}
+
+.card-header h5,
+.card-header h6 {
+    margin: 0;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.card-header i {
+    margin-right: var(--spacing-sm);
+    font-size: 1.1rem;
+}
+
+.card-body {
+    padding: var(--spacing-lg);
+    position: relative;
+}
+
+.card-footer {
+    background: rgba(0, 0, 0, 0.02);
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    padding: var(--spacing-md) var(--spacing-lg);
+}
+
+/* Stats Cards */
+.stats-card {
+    background: var(--gradient-stats);
+    color: white;
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    text-align: center;
+    transition: var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+.stats-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    transform: scale(0);
+    transition: transform 0.6s ease;
+}
+
+.stats-card:hover::before {
+    transform: scale(1);
+}
+
+.stats-card:hover {
+    transform: translateY(-10px) rotateY(5deg);
+}
+
+.stats-card h3 {
+    font-size: 2.5rem;
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--spacing-sm);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.stats-card p {
+    margin: 0;
+    font-weight: var(--font-weight-medium);
+    opacity: 0.9;
+}
+
+.stats-card .fs-1 {
+    opacity: 0.7;
+    position: absolute;
+    top: 50%;
+    right: var(--spacing-lg);
+    transform: translateY(-50%);
+    font-size: 3rem !important;
+}
+
+/* Card Variants */
+.card-glass {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.card-gradient {
+    background: var(--gradient-primary);
+    color: white;
+}
+
+.card-gradient .card-header {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.card-gradient .card-body {
+    background: transparent;
+}
+
+/* Hover Effects */
+.hover-lift {
+    transition: var(--transition-normal);
+}
+
+.hover-lift:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+}
+
+/* Card Groups */
+.card-group .card {
+    border-radius: 0;
+}
+
+.card-group .card:first-child {
+    border-top-left-radius: var(--border-radius-md);
+    border-bottom-left-radius: var(--border-radius-md);
+}
+
+.card-group .card:last-child {
+    border-top-right-radius: var(--border-radius-md);
+    border-bottom-right-radius: var(--border-radius-md);
+}
+
+/* RTL Support */
+[dir="rtl"] .card-header i {
+    margin-right: 0;
+    margin-left: var(--spacing-sm);
+}
+
+[dir="rtl"] .stats-card .fs-1 {
+    right: auto;
+    left: var(--spacing-lg);
+}
+
+[dir="rtl"] .card-group .card:first-child {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: var(--border-radius-md);
+    border-bottom-right-radius: var(--border-radius-md);
+}
+
+[dir="rtl"] .card-group .card:last-child {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top-left-radius: var(--border-radius-md);
+    border-bottom-left-radius: var(--border-radius-md);
+}
+
+/* Mobile Cards */
+@media (max-width: 768px) {
+    .stats-card h3 {
+        font-size: 2rem;
+    }
+    
+    .stats-card {
+        padding: var(--spacing-md);
+    }
+    
+    .stats-card .fs-1 {
+        position: static;
+        transform: none;
+        font-size: 2rem !important;
+        margin-top: var(--spacing-sm);
+        opacity: 1;
+    }
+    
+    .card-body {
+        padding: var(--spacing-md);
+    }
+    
+    .card-header {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+}

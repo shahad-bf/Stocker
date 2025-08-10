@@ -1,0 +1,61 @@
+{% extends 'dashboard/base.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}{% trans "Add Stock Movement" %} - {% trans "Inventory Plus" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        {% trans "Add Stock Movement" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary me-2">
+                                    <i class="bi bi-check-lg me-1"></i>
+                                    {% trans "Save Movement" %}
+                                </button>
+                                <a href="{% url 'inventory:movement_list' %}" class="btn btn-secondary">
+                                    <i class="bi bi-x-lg me-1"></i>
+                                    {% trans "Cancel" %}
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-calculate new stock when quantity changes
+    const productField = document.querySelector('#id_product');
+    const quantityField = document.querySelector('#id_quantity');
+    const movementTypeField = document.querySelector('#id_movement_type');
+    
+    function updateStockPreview() {
+        if (productField.value && quantityField.value && movementTypeField.value) {
+            // You can add AJAX call here to get current stock and calculate new stock
+            console.log('Updating stock preview...');
+        }
+    }
+    
+    if (quantityField) quantityField.addEventListener('input', updateStockPreview);
+    if (movementTypeField) movementTypeField.addEventListener('change', updateStockPreview);
+    if (productField) productField.addEventListener('change', updateStockPreview);
+});
+</script>
+{% endblock %}

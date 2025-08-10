@@ -1,0 +1,27 @@
+{% extends 'dashboard/base.html' %}
+
+
+{% block title %}{% trans "Redirecting..." %}{% endblock %}
+
+{% block content %}
+<script>
+// Immediate redirect to dashboard
+window.location.href = "{% url 'dashboard' %}";
+</script>
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3">{% trans "Redirecting to dashboard..." %}</p>
+                <a href="{% url 'dashboard' %}" class="btn btn-primary">
+                    {% trans "Click here if not redirected" %}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

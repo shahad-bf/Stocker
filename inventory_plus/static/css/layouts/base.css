@@ -1,0 +1,82 @@
+/* Base Layout Styles - Inventory Plus */
+
+body {
+    background: var(--body-bg);
+    min-height: 100vh;
+    font-family: var(--font-family);
+    margin: 0;
+    padding: 0;
+}
+
+/* Main Container */
+.main-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: var(--border-radius-lg);
+    margin: 20px;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+}
+
+/* Content Area */
+.content-area {
+    padding: var(--spacing-xl);
+    min-height: calc(100vh - 120px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .main-container {
+        margin: 10px;
+        border-radius: var(--border-radius-md);
+    }
+    
+    .content-area {
+        padding: var(--spacing-md);
+    }
+}
+
+@media (max-width: 576px) {
+    .main-container {
+        margin: 5px;
+        border-radius: var(--border-radius-sm);
+    }
+    
+    .content-area {
+        padding: var(--spacing-sm);
+    }
+}
+
+/* Grid System Enhancements */
+.row {
+    margin-left: calc(-1 * var(--spacing-sm));
+    margin-right: calc(-1 * var(--spacing-sm));
+}
+
+.col,
+[class*="col-"] {
+    padding-left: var(--spacing-sm);
+    padding-right: var(--spacing-sm);
+}
+
+/* Container Utilities */
+.container-fluid {
+    padding-left: var(--spacing-md);
+    padding-right: var(--spacing-md);
+}
+
+/* Fade In Animation */
+.fade-in {
+    animation: fadeIn 0.8s ease-in;
+}
+
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(30px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}

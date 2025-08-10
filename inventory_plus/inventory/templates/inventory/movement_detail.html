@@ -1,0 +1,192 @@
+{% extends 'dashboard/base.html' %}
+
+{% load humanize %}
+
+{% block title %}Stock Movement Details - Inventory Plus{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Movement Details
+                    </h5>
+                    <div>
+                        <span class="badge bg-{% if movement.movement_type == 'in' %}success{% elif movement.movement_type == 'out' %}warning{% else %}info{% endif %} fs-6">
+                            {{ movement.get_movement_type_display }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Product Information</h6>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Product:</strong></td>
+                                    <td>{{ movement.product.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>SKU:</strong></td>
+                                    <td>{{ movement.product.sku }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Category:</strong></td>
+                                    <td>{{ movement.product.category.name }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Movement Information</h6>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Type:</strong></td>
+                                    <td>
+                                        <span class="badge bg-{% if movement.movement_type == 'in' %}success{% elif movement.movement_type == 'out' %}warning{% else %}info{% endif %}">
+                                            {{ movement.get_movement_type_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Quantity:</strong></td>
+                                    <td>
+                                        <span class="fw-bold fs-5 {% if movement.movement_type == 'in' %}text-success{% elif movement.movement_type == 'out' %}text-warning{% endif %}">
+                                            {% if movement.movement_type == 'in' %}+{% elif movement.movement_type == 'out' %}-{% endif %}{{ movement.quantity }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Previous Stock:</strong></td>
+                                    <td>{{ movement.previous_stock }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>New Stock:</strong></td>
+                                    <td>{{ movement.new_stock }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    {% if movement.unit_cost %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>Financial Information</h6>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Unit Cost:</strong></td>
+                                    <td>{{ movement.unit_cost }} SAR</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total Value:</strong></td>
+                                    <td class="fw-bold">{{ movement.total_value }} SAR</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if movement.supplier %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>Supplier Information</h6>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Supplier:</strong></td>
+                                    <td>{{ movement.supplier.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Contact:</strong></td>
+                                    <td>{{ movement.supplier.email }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if movement.reference_number %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>Reference Information</h6>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Reference Number:</strong></td>
+                                    <td>{{ movement.reference_number }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if movement.notes %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>Notes</h6>
+                            <div class="alert alert-info">
+                                {{ movement.notes|linebreaks }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>Metadata</h6>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Created At:</strong></td>
+                                    <td>{{ movement.created_at }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Created By:</strong></td>
+                                    <td>{{ movement.created_by.get_full_name|default:movement.created_by.username }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'inventory:movement_list' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>
+                        Back to List
+                    </a>
+                    <a href="{% url 'products:products:product_detail' movement.product.pk %}" class="btn btn-primary">
+                        <i class="bi bi-box me-1"></i>
+                        View Product
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-graph-up me-2"></i>
+                        Stock Impact
+                    </h6>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <div class="display-6 text-muted">{{ movement.previous_stock }}</div>
+                        <small class="text-muted">Before</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <i class="bi bi-arrow-down display-6 {% if movement.movement_type == 'in' %}text-success{% elif movement.movement_type == 'out' %}text-warning{% else %}text-info{% endif %}"></i>
+                        <div class="fw-bold {% if movement.movement_type == 'in' %}text-success{% elif movement.movement_type == 'out' %}text-warning{% else %}text-info{% endif %}">
+                            {% if movement.movement_type == 'in' %}+{% elif movement.movement_type == 'out' %}-{% endif %}{{ movement.quantity }}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="display-6 fw-bold">{{ movement.new_stock }}</div>
+                        <small class="text-muted">After</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

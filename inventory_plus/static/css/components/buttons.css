@@ -1,0 +1,301 @@
+/* Button Components - Inventory Plus */
+
+.btn {
+    border-radius: var(--border-radius-xl);
+    padding: 0.6rem 1.5rem;
+    font-weight: var(--font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: var(--transition-normal);
+    border: none;
+    position: relative;
+    overflow: hidden;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left var(--transition-slow);
+}
+
+.btn:hover::before {
+    left: 100%;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    text-decoration: none;
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn:focus {
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+/* Button Variants */
+.btn-primary {
+    background: var(--gradient-primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #2980b9 0%, #3498db 100%);
+    color: white;
+}
+
+.btn-success {
+    background: var(--gradient-success);
+    color: white;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #0f7b6c 0%, #27ae60 100%);
+    color: white;
+}
+
+.btn-warning {
+    background: var(--gradient-warning);
+    color: #333;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #f4d03f 0%, #f39c12 100%);
+    color: #333;
+}
+
+.btn-danger {
+    background: var(--gradient-danger);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    color: white;
+}
+
+.btn-info {
+    background: linear-gradient(135deg, var(--info-color) 0%, #5dade2 100%);
+    color: white;
+}
+
+.btn-info:hover {
+    background: linear-gradient(135deg, #138496 0%, #3498db 100%);
+    color: white;
+}
+
+/* Outline Buttons */
+.btn-outline-primary {
+    border: 2px solid var(--secondary-color);
+    color: var(--secondary-color);
+    background: transparent;
+}
+
+.btn-outline-primary:hover {
+    background: var(--gradient-primary);
+    color: white;
+    border-color: transparent;
+}
+
+.btn-outline-success {
+    border: 2px solid var(--success-color);
+    color: var(--success-color);
+    background: transparent;
+}
+
+.btn-outline-success:hover {
+    background: var(--gradient-success);
+    color: white;
+    border-color: transparent;
+}
+
+.btn-outline-warning {
+    border: 2px solid var(--warning-color);
+    color: var(--warning-color);
+    background: transparent;
+}
+
+.btn-outline-warning:hover {
+    background: var(--gradient-warning);
+    color: #333;
+    border-color: transparent;
+}
+
+.btn-outline-danger {
+    border: 2px solid var(--danger-color);
+    color: var(--danger-color);
+    background: transparent;
+}
+
+.btn-outline-danger:hover {
+    background: var(--gradient-danger);
+    color: white;
+    border-color: transparent;
+}
+
+/* Button Sizes */
+.btn-sm {
+    padding: 0.4rem 1rem;
+    font-size: 0.875rem;
+    border-radius: var(--border-radius-lg);
+}
+
+.btn-lg {
+    padding: 0.8rem 2rem;
+    font-size: 1.125rem;
+    border-radius: var(--border-radius-xl);
+}
+
+/* Button Groups */
+.btn-group .btn {
+    border-radius: 0;
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-group .btn:first-child {
+    border-top-left-radius: var(--border-radius-xl);
+    border-bottom-left-radius: var(--border-radius-xl);
+}
+
+.btn-group .btn:last-child {
+    border-top-right-radius: var(--border-radius-xl);
+    border-bottom-right-radius: var(--border-radius-xl);
+    border-right: none;
+}
+
+.btn-group .btn:not(:first-child):not(:last-child) {
+    border-radius: 0;
+}
+
+/* Loading State */
+.btn .loading {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    margin-right: var(--spacing-xs);
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Disabled State */
+.btn:disabled,
+.btn.disabled {
+    opacity: 0.6;
+    transform: none !important;
+    cursor: not-allowed;
+}
+
+.btn:disabled:hover,
+.btn.disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* Icon Buttons */
+.btn-icon {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon i {
+    margin: 0;
+}
+
+/* Floating Action Button */
+.btn-fab {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: var(--z-dropdown);
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-fab:hover {
+    transform: scale(1.1);
+}
+
+/* RTL Support */
+[dir="rtl"] .btn-group .btn:first-child {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: var(--border-radius-xl);
+    border-bottom-right-radius: var(--border-radius-xl);
+}
+
+[dir="rtl"] .btn-group .btn:last-child {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top-left-radius: var(--border-radius-xl);
+    border-bottom-left-radius: var(--border-radius-xl);
+}
+
+[dir="rtl"] .btn .loading {
+    margin-right: 0;
+    margin-left: var(--spacing-xs);
+}
+
+[dir="rtl"] .btn-fab {
+    right: auto;
+    left: 2rem;
+}
+
+/* Mobile Buttons */
+@media (max-width: 768px) {
+    .btn {
+        padding: 0.5rem 1.2rem;
+        font-size: 0.875rem;
+    }
+    
+    .btn-lg {
+        padding: 0.7rem 1.8rem;
+        font-size: 1rem;
+    }
+    
+    .btn-sm {
+        padding: 0.3rem 0.8rem;
+        font-size: 0.8rem;
+    }
+    
+    .btn-fab {
+        bottom: 1rem;
+        right: 1rem;
+        width: 48px;
+        height: 48px;
+    }
+    
+    [dir="rtl"] .btn-fab {
+        right: auto;
+        left: 1rem;
+    }
+}

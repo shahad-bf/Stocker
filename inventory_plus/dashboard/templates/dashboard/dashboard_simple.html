@@ -1,0 +1,20 @@
+{% extends 'dashboard/base.html' %}
+
+
+{% block title %}{% trans "Dashboard" %} - {% trans "Inventory Plus" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1>{% trans "Dashboard" %}</h1>
+            <p>{% trans "Welcome to Inventory Plus Dashboard!" %}</p>
+            
+            <div class="alert alert-success" role="alert">
+                <i class="bi bi-check-circle me-2"></i>
+                {% trans "System is working correctly!" %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

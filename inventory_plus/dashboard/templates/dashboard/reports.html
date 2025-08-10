@@ -1,0 +1,78 @@
+{% extends 'dashboard/base.html' %}
+
+{% load humanize %}
+
+{% block title %}{% trans "Reports" %} - {% trans "Inventory Plus" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-earmark-text me-2"></i>
+                        {% trans "Inventory Reports" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>{% trans "Top Products by Value" %}</h6>
+                            {% if products_by_value %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>{% trans "Product" %}</th>
+                                                <th>{% trans "Stock" %}</th>
+                                                <th>{% trans "Value" %}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for product in products_by_value %}
+                                            <tr>
+                                                <td>{{ product.name }}</td>
+                                                <td>{{ product.stock_quantity }}</td>
+                                                <td>{{ product.total_value|floatformat:2 }} SAR</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted">{% trans "No product data available" %}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <h6>{% trans "Most Active Products" %}</h6>
+                            {% if most_active_products %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>{% trans "Product" %}</th>
+                                                <th>{% trans "Movements" %}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for product in most_active_products %}
+                                            <tr>
+                                                <td>{{ product.name }}</td>
+                                                <td>{{ product.movement_count }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted">{% trans "No activity data available" %}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
