@@ -1,0 +1,214 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}
+    Notification Details - Inventory Plus
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Notification Card -->
+            <div class="card shadow-sm animate__animated animate__fadeInUp">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-{{ notification.type_icon }} me-2"></i>
+                        Notification Details
+                    </h5>
+                    <div>
+                        <span class="badge bg-{{ notification.priority_color }} me-2">
+                            {{ notification.get_priority_display }}
+                        </span>
+                        <span class="badge bg-secondary">
+                            {{ notification.get_type_display }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Title -->
+                    <h4 class="text-primary mb-3">{{ notification.title }}</h4>
+                    
+                    <!-- Message -->
+                    <div class="alert alert-{{ notification.priority_color }} alert-dismissible">
+                        <i class="bi bi-{{ notification.type_icon }} me-2"></i>
+                        {{ notification.message|linebreaks }}
+                    </div>
+                    
+                    <!-- Notification Info -->
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">
+                                <i class="bi bi-info-circle me-2"></i>Notification Information
+                            </h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <strong>Type:</strong> 
+                                    <span class="badge bg-info">{{ notification.get_type_display }}</span>
+                                </li>
+                                <li class="mb-2">
+                                    <strong>Priority:</strong> 
+                                    <span class="badge bg-{{ notification.priority_color }}">{{ notification.get_priority_display }}</span>
+                                </li>
+                                <li class="mb-2">
+                                    <strong>Status:</strong> 
+                                    {% if notification.is_read %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle me-1"></i>Read
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning">
+                                            <i class="bi bi-exclamation-circle me-1"></i>Unread
+                                        </span>
+                                    {% endif %}
+                                </li>
+                                <li class="mb-2">
+                                    <strong>Email Status:</strong> 
+                                    {% if notification.is_email_sent %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-envelope-check me-1"></i>Sent
+                                        </span>
+                                        {% if notification.email_sent_at %}
+                                            <small class="text-muted d-block">
+                                                Sent on {{ notification.email_sent_at|date:"M d, Y H:i" }}
+                                            </small>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge bg-secondary">
+                                            <i class="bi bi-envelope me-1"></i>Not Sent
+                                        </span>
+                                    {% endif %}
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">
+                                <i class="bi bi-clock me-2"></i>Timestamps
+                            </h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <strong>Created:</strong> 
+                                    <span class="text-muted">{{ notification.created_at|date:"M d, Y H:i" }}</span>
+                                    <small class="text-muted d-block">
+                                        ({{ notification.created_at|timesince }} ago)
+                                    </small>
+                                </li>
+                                {% if notification.created_by %}
+                                <li class="mb-2">
+                                    <strong>Created by:</strong> 
+                                    <span class="text-muted">{{ notification.created_by.get_full_name|default:notification.created_by.username }}</span>
+                                </li>
+                                {% endif %}
+                                {% if notification.user %}
+                                <li class="mb-2">
+                                    <strong>For User:</strong> 
+                                    <span class="text-muted">{{ notification.user.get_full_name|default:notification.user.username }}</span>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Related Product -->
+                    {% if notification.product %}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">
+                                <i class="bi bi-box me-2"></i>Related Product
+                            </h6>
+                            <div class="card border-left-primary">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-8">
+                                            <h6 class="mb-1">{{ notification.product.name }}</h6>
+                                            <p class="text-muted mb-1">SKU: {{ notification.product.sku }}</p>
+                                            <p class="text-muted mb-0">Category: {{ notification.product.category.name }}</p>
+                                        </div>
+                                        <div class="col-md-4 text-end">
+                                            <a href="{{ notification.product.get_absolute_url }}" class="btn btn-outline-primary btn-sm">
+                                                <i class="bi bi-eye me-1"></i>View Product
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Extra Data -->
+                    {% if notification.extra_data %}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">
+                                <i class="bi bi-code me-2"></i>Additional Information
+                            </h6>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <pre class="mb-0"><code>{{ notification.extra_data|pprint }}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="card-footer bg-light">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="btn-group" role="group">
+                                {% if not notification.is_read %}
+                                <a href="{% url 'notifications:mark_read' notification.pk %}" class="btn btn-success btn-sm">
+                                    <i class="bi bi-check-circle me-1"></i>Mark as Read
+                                </a>
+                                {% endif %}
+                                
+                                {% if not notification.is_email_sent %}
+                                <form method="post" action="{% url 'notifications:send_email' notification.pk %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-envelope me-1"></i>Send Email
+                                    </button>
+                                </form>
+                                {% endif %}
+                                
+                                <a href="{% url 'notifications:notification_list' %}" class="btn btn-secondary btn-sm">
+                                    <i class="bi bi-arrow-left me-1"></i>Back to List
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 text-end">
+                            <small class="text-muted">
+                                ID: {{ notification.id|slice:":8" }}...
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.border-left-primary {
+    border-left: 4px solid #007bff !important;
+}
+
+.card-body pre {
+    font-size: 0.875rem;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.list-unstyled li {
+    padding: 0.25rem 0;
+}
+</style>
+{% endblock %}

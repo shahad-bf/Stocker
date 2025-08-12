@@ -1,0 +1,78 @@
+{% extends 'dashboard/base.html' %}
+
+{% load humanize %}
+
+{% block title %}{% trans "Analytics" %} - {% trans "Inventory Plus" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-graph-up me-2"></i>
+                        {% trans "Analytics & Reports" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>{% trans "Stock Movements" %}</h6>
+                            {% if movements_data %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>{% trans "Type" %}</th>
+                                                <th>{% trans "Count" %}</th>
+                                                <th>{% trans "Total Quantity" %}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for movement in movements_data %}
+                                            <tr>
+                                                <td>{{ movement.movement_type|title }}</td>
+                                                <td>{{ movement.count }}</td>
+                                                <td>{{ movement.total_quantity|default:0 }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted">{% trans "No movement data available" %}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <h6>{% trans "Products by Category" %}</h6>
+                            {% if category_data %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>{% trans "Category" %}</th>
+                                                <th>{% trans "Products" %}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for category in category_data %}
+                                            <tr>
+                                                <td>{{ category.name }}</td>
+                                                <td>{{ category.product_count }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted">{% trans "No category data available" %}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

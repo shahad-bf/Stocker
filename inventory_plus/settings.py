@@ -49,9 +49,11 @@ INSTALLED_APPS = [
     'django_extensions',
     
     # Local apps
-               
-    'products',          # Products and categories        
-        
+    'dashboard',         # Dashboard and reports (must be first for template priority)
+    'accounts',           # User management and authentication
+    'products',          # Products and categories
+    'suppliers',         # Supplier management
+    'inventory',         # Stock movements and inventory tracking
     'notifications',     # Notification system
 ]
 

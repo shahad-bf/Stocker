@@ -1,0 +1,212 @@
+{% extends 'dashboard/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Login - Inventory Plus{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center align-items-center min-vh-100">
+        <div class="col-lg-5 col-md-7">
+            <div class="card shadow-lg border-0 animate__animated animate__fadeInUp">
+                <div class="card-body p-5">
+                    <!-- Logo and Title -->
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <i class="bi bi-box-seam display-3 text-primary"></i>
+                        </div>
+                        <h2 class="fw-bold text-primary">Inventory Plus</h2>
+                        <p class="text-muted">Professional Inventory Management System</p>
+                    </div>
+
+                    <!-- Login Form -->
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="id_username" class="form-label">
+                                <i class="bi bi-person me-2"></i>Username
+                            </label>
+                            <input type="text" 
+                                   class="form-control form-control-lg" 
+                                   id="id_username" 
+                                   name="username" 
+                                   placeholder="Enter your username"
+                                   required>
+                            <div class="invalid-feedback">
+                                Please enter your username.
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="id_password" class="form-label">
+                                <i class="bi bi-lock me-2"></i>Password
+                            </label>
+                            <div class="input-group">
+                                <input type="password" 
+                                       class="form-control form-control-lg" 
+                                       id="id_password" 
+                                       name="password" 
+                                       placeholder="Enter your password"
+                                       required>
+                                <button class="btn btn-outline-secondary" 
+                                        type="button" 
+                                        id="togglePassword">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <div class="invalid-feedback">
+                                Please enter your password.
+                            </div>
+                        </div>
+
+                        <!-- Error Messages -->
+                        {% if form.errors %}
+                            <div class="alert alert-danger animate__animated animate__shakeX">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        {{ error }}<br>
+                                    {% endfor %}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <!-- Login Button -->
+                        <div class="d-grid mb-3">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>
+                                Sign In
+                            </button>
+                        </div>
+
+                        <!-- Remember Me -->
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="rememberMe">
+                            <label class="form-check-label" for="rememberMe">
+                                Remember me
+                            </label>
+                        </div>
+                    </form>
+
+                    <!-- Additional Links -->
+                    <div class="text-center">
+                        <div class="mb-3">
+                            <a href="#" class="text-decoration-none">
+                                <i class="bi bi-question-circle me-1"></i>
+                                Forgot Password?
+                            </a>
+                        </div>
+                        
+                        <!-- Registration temporarily disabled -->
+                        <!-- <div class="border-top pt-3">
+                            <p class="text-muted mb-2">Don't have an account?</p>
+                            <a href="#" class="btn btn-outline-primary disabled">
+                                <i class="bi bi-person-plus me-2"></i>
+                                Create Account
+                            </a>
+                        </div> -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo Credentials -->
+            <div class="card mt-3 animate__animated animate__fadeInUp animate__delay-1s">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-3">Demo Credentials</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded mb-2">
+                                <strong>Admin Account</strong><br>
+                                <small>Username: admin</small><br>
+                                <small>Password: admin123</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded mb-2">
+                                <strong>Employee Account</strong><br>
+                                <small>Username: employee</small><br>
+                                <small>Password: emp123</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .card {
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.95);
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        transform: translateY(-2px);
+    }
+</style>
+
+<script>
+// Form validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// Toggle password visibility
+document.getElementById('togglePassword').addEventListener('click', function() {
+    const password = document.getElementById('id_password');
+    const icon = this.querySelector('i');
+    
+    if (password.type === 'password') {
+        password.type = 'text';
+        icon.classList.remove('bi-eye');
+        icon.classList.add('bi-eye-slash');
+    } else {
+        password.type = 'password';
+        icon.classList.remove('bi-eye-slash');
+        icon.classList.add('bi-eye');
+    }
+});
+
+// Auto-fill demo credentials
+document.querySelectorAll('.bg-light').forEach(function(element) {
+    element.addEventListener('click', function() {
+        const text = this.textContent;
+        if (text.includes('admin')) {
+            document.getElementById('id_username').value = 'admin';
+            document.getElementById('id_password').value = 'admin123';
+        } else if (text.includes('employee')) {
+            document.getElementById('id_username').value = 'employee';
+            document.getElementById('id_password').value = 'emp123';
+        }
+    });
+});
+</script>
+{% endblock %}

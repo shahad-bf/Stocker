@@ -1,0 +1,311 @@
+{% extends 'dashboard/base.html' %}
+{% load humanize %}
+
+{% block title %}Notifications - Inventory Plus{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-0">
+                        <i class="bi bi-bell me-2 text-primary"></i>
+                        Notifications
+
+                    </h1>
+                    <p class="text-muted mb-0">Manage system alerts and notifications</p>
+                </div>
+                <div class="btn-group" role="group">
+                    <a href="{% url 'notifications:generate_stock_notifications' %}" class="btn btn-primary" onclick="return confirm('Generate new notifications based on current inventory status?')">
+                        <i class="bi bi-gear me-1"></i>Generate Stock Alerts
+                    </a>
+                    <a href="{% url 'notifications:mark_all_read' %}" class="btn btn-outline-success">
+                        <i class="bi bi-check-all me-1"></i>Mark All Read
+                    </a>
+                    <a href="{% url 'notifications:send_all_emails' %}" class="btn btn-outline-primary" onclick="return confirm('Send email notifications for all unsent notifications?')">
+                        <i class="bi bi-envelope-plus me-1"></i>Send All Emails
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ notification_counts.total }}</h4>
+                            <small>Total Notifications</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-bell fs-1 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ notifications.count }}</h4>
+                            <small>Total</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-bell-fill fs-1 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ notification_counts.urgent }}</h4>
+                            <small>Urgent</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-exclamation-triangle-fill fs-1 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ notification_counts.low_stock }}</h4>
+                            <small>Stock Alerts</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-box fs-1 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-funnel me-2"></i>
+                Filters
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="type" class="form-label">Type</label>
+                    <select class="form-select" id="type" name="type">
+                        <option value="">All Types</option>
+                        <option value="low_stock" {% if current_type == 'low_stock' %}selected{% endif %}>Low Stock</option>
+                        <option value="out_of_stock" {% if current_type == 'out_of_stock' %}selected{% endif %}>Out of Stock</option>
+                        <option value="expiry_soon" {% if current_type == 'expiry_soon' %}selected{% endif %}>Expiry Soon</option>
+                        <option value="expired" {% if current_type == 'expired' %}selected{% endif %}>Expired</option>
+                        <option value="reorder_needed" {% if current_type == 'reorder_needed' %}selected{% endif %}>Reorder Needed</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="priority" class="form-label">Priority</label>
+                    <select class="form-select" id="priority" name="priority">
+                        <option value="">All Priorities</option>
+                        <option value="urgent" {% if current_priority == 'urgent' %}selected{% endif %}>Urgent</option>
+                        <option value="high" {% if current_priority == 'high' %}selected{% endif %}>High</option>
+                        <option value="medium" {% if current_priority == 'medium' %}selected{% endif %}>Medium</option>
+                        <option value="low" {% if current_priority == 'low' %}selected{% endif %}>Low</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search me-1"></i>Filter
+                        </button>
+                        <a href="{% url 'notifications:notification_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-1"></i>Clear
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-list me-2"></i>
+                Notifications
+                {% if page_obj %}
+                <small class="text-muted">({{ page_obj.paginator.count }} total)</small>
+                {% endif %}
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            {% if notifications %}
+            <div class="list-group list-group-flush">
+                {% for notification in notifications %}
+                <div class="list-group-item {% if not notification.is_read %}list-group-item-light border-start border-3 border-{{ notification.get_priority_color }}{% endif %}">
+                    <div class="d-flex w-100 justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center mb-2">
+                                <!-- Priority Badge -->
+                                <span class="badge bg-{{ notification.get_priority_color }} me-2">
+                                    {{ notification.get_priority_display }}
+                                </span>
+                                
+                                <!-- Type Badge -->
+                                <span class="badge bg-secondary me-2">
+                                    {{ notification.get_type_display }}
+                                </span>
+                                
+                                <!-- Unread Indicator -->
+
+                            </div>
+                            
+                            <h6 class="mb-1">
+                                <a href="{% url 'notifications:notification_detail' notification.pk %}" class="text-decoration-none">
+                                    {{ notification.title }}
+                                </a>
+                            </h6>
+                            
+                            <p class="mb-1 text-muted">{{ notification.message|truncatewords:20 }}</p>
+                            
+                            {% if notification.product %}
+                            <small class="text-muted">
+                                <i class="bi bi-box me-1"></i>
+                                Product: {{ notification.product.name }} ({{ notification.product.sku }})
+                            </small>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="text-end">
+                            <small class="text-muted d-block">{{ notification.created_at|naturaltime }}</small>
+                            
+                            <!-- Email Status -->
+                            <div class="mt-1">
+                                {% if notification.is_email_sent %}
+                                    <small class="text-success">
+                                        <i class="bi bi-envelope-check me-1"></i>Email Sent
+                                    </small>
+                                {% else %}
+                                    <small class="text-muted">
+                                        <i class="bi bi-envelope me-1"></i>Email Not Sent
+                                    </small>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mt-2 btn-group" role="group">
+                                <a href="{% url 'notifications:notification_detail' notification.pk %}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-eye me-1"></i>View
+                                </a>
+                                
+                                {% if not notification.is_email_sent %}
+                                <form method="post" action="{% url 'notifications:send_email' notification.pk %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-primary" title="Send Email" onclick="return confirm('Send email notification for: {{ notification.title|escapejs }}?')">
+                                        <i class="bi bi-envelope"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                
+                                {% if not notification.is_read %}
+                                <a href="{% url 'notifications:mark_read' notification.pk %}" class="btn btn-sm btn-outline-success" title="Mark as Read">
+                                    <i class="bi bi-check"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-bell-slash display-1 text-muted mb-3"></i>
+                <h4 class="text-muted">No Notifications Found</h4>
+                <p class="text-muted">There are no notifications matching your criteria.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav aria-label="Notifications pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.priority %}&priority={{ request.GET.priority }}{% endif %}{% if request.GET.read %}&read={{ request.GET.read }}{% endif %}">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.priority %}&priority={{ request.GET.priority }}{% endif %}{% if request.GET.read %}&read={{ request.GET.read }}{% endif %}">Previous</a>
+                </li>
+            {% endif %}
+
+            <li class="page-item active">
+                <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            </li>
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.priority %}&priority={{ request.GET.priority }}{% endif %}{% if request.GET.read %}&read={{ request.GET.read }}{% endif %}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.priority %}&priority={{ request.GET.priority }}{% endif %}{% if request.GET.read %}&read={{ request.GET.read }}{% endif %}">Last</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<script>
+function markAsRead(notificationId) {
+    fetch(`/notifications/${notificationId}/mark-read/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+
+function markAllAsRead() {
+    if (confirm('Are you sure you want to mark all notifications as read?')) {
+        fetch('/notifications/mark-all-read/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

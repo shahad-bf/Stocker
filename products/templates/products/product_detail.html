@@ -1,0 +1,318 @@
+{% extends 'dashboard/base.html' %}
+{% load humanize %}
+
+{% block title %}{{ product.name }} - Inventory Plus{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-0">{{ product.name }}</h1>
+                    <p class="text-muted mb-0">SKU: {{ product.sku }}</p>
+                </div>
+                <div>
+                    <a href="{% url 'products:product_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Back to Products
+                    </a>
+                    <a href="{% url 'products:product_edit' product.pk %}" class="btn btn-primary">
+                        <i class="bi bi-pencil me-1"></i>Edit Product
+                    </a>
+                    {% if user.is_authenticated %}
+                        {% if user.profile and user.profile.is_admin or user.username == 'admin' %}
+                        <a href="{% url 'products:product_delete' product.pk %}" class="btn btn-danger">
+                            <i class="bi bi-trash me-1"></i>Delete
+                        </a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Product Information -->
+        <div class="col-lg-8 mb-4">
+            <div class="card animate__animated animate__fadeInLeft">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            {% if product.image %}
+                                <img src="{{ product.image.url }}" 
+                                     alt="{{ product.name }}" 
+                                     class="img-fluid rounded shadow-sm">
+                            {% else %}
+                                <div class="bg-light rounded d-flex align-items-center justify-content-center" 
+                                     style="height: 300px;">
+                                    <i class="bi bi-image display-1 text-muted"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-8">
+                            <h3>{{ product.name }}</h3>
+                            <p class="text-muted mb-3">{{ product.description|default:"No description available" }}</p>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-6">
+                                    <strong>Category:</strong>
+                                    {% if product.category %}
+                                        <span class="badge bg-info ms-2">{{ product.category.name }}</span>
+                                    {% else %}
+                                        <span class="text-muted">No category</span>
+                                    {% endif %}
+                                </div>
+                                <div class="col-sm-6">
+                                    <strong>Unit:</strong> {{ product.get_unit_display }}
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-6">
+                                    <strong>Unit Price:</strong> {{ product.unit_price|floatformat:2 }} SAR
+                                </div>
+                                {% if product.cost_price %}
+                                <div class="col-sm-6">
+                                    <strong>Cost Price:</strong> {{ product.cost_price|floatformat:2 }} SAR
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            {% if product.suppliers.exists %}
+                            <div class="mb-3">
+                                <strong>Suppliers:</strong>
+                                {% for supplier in product.suppliers.all %}
+                                    <span class="badge bg-secondary me-1">{{ supplier.name }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stock Information & Actions -->
+        <div class="col-lg-4">
+            <!-- Stock Status -->
+            <div class="card mb-4 animate__animated animate__fadeInRight">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-boxes me-2"></i>Stock Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <h2 class="{% if product.is_out_of_stock %}text-danger{% elif product.is_low_stock %}text-warning{% else %}text-success{% endif %}">
+                            {{ product.stock_quantity }}
+                        </h2>
+                        <p class="text-muted">{{ product.get_unit_display }} in stock</p>
+                        
+                        {% if product.is_out_of_stock %}
+                            <span class="badge bg-danger">Out</span>
+                        {% elif product.is_low_stock %}
+                            <span class="badge bg-warning">Low</span>
+                        {% else %}
+                            <span class="badge bg-success">High</span>
+                        {% endif %}
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <small class="text-muted">Minimum</small>
+                            <div class="fw-bold">{{ product.minimum_stock }}</div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Reorder Level</small>
+                            <div class="fw-bold">{{ product.reorder_level }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <button type="button" 
+                                class="btn btn-warning w-100" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#stockModal">
+                            <i class="bi bi-arrow-up-down me-2"></i>Update Stock
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="card animate__animated animate__fadeInRight animate__delay-1s">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-graph-up me-2"></i>Quick Stats
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Stock Value:</span>
+                            <strong>{{ product.stock_value|floatformat:2|intcomma }} SAR</strong>
+                        </div>
+                    </div>
+                    
+                    {% if product.profit_margin %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Profit Margin:</span>
+                            <strong>{{ product.profit_margin|floatformat:1 }}%</strong>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Status:</span>
+                            {% if product.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="d-flex justify-content-between">
+                            <span>Created:</span>
+                            <small class="text-muted">{{ product.created_at|date:"M d, Y" }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stock Movements -->
+    {% if recent_movements %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card animate__animated animate__fadeInUp">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-arrow-left-right me-2"></i>
+                        Recent Stock Movements
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Quantity</th>
+                                    <th>Previous Stock</th>
+                                    <th>New Stock</th>
+                                    <th>By</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for movement in recent_movements %}
+                                <tr>
+                                    <td>{{ movement.created_at|date:"M d, Y H:i" }}</td>
+                                    <td>
+                                        <span class="badge {% if movement.movement_type == 'in' %}bg-success{% elif movement.movement_type == 'out' %}bg-danger{% else %}bg-warning{% endif %}">
+                                            {{ movement.get_movement_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if movement.movement_type == 'in' %}
+                                            <span class="text-success">+{{ movement.quantity }}</span>
+                                        {% elif movement.movement_type == 'out' %}
+                                            <span class="text-danger">-{{ movement.quantity }}</span>
+                                        {% else %}
+                                            {{ movement.quantity }}
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ movement.previous_stock }}</td>
+                                    <td>{{ movement.new_stock }}</td>
+                                    <td>{{ movement.created_by.get_full_name|default:movement.created_by.username }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Stock Update Modal -->
+<div class="modal fade" id="stockModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Stock - {{ product.name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'inventory:stock_adjust' product.pk %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Current Stock: <strong>{{ product.stock_quantity }} {{ product.unit }}</strong></label>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" required min="0">
+                    </div>
+                    <div class="mb-3">
+                        <label for="movement_type" class="form-label">Movement Type</label>
+                        <select class="form-select" id="movement_type" name="movement_type" required>
+                            <option value="in">Stock In (+)</option>
+                            <option value="out">Stock Out (-)</option>
+                            <option value="adjustment">Adjustment (Set to)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Stock</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Fix modal backdrop issues
+document.addEventListener('DOMContentLoaded', function() {
+    // Ensure modals work properly
+    var modals = document.querySelectorAll('.modal');
+    modals.forEach(function(modal) {
+        modal.addEventListener('show.bs.modal', function() {
+            // Fix z-index issues
+            this.style.zIndex = '1055';
+            var backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.style.zIndex = '1054';
+            }
+        });
+        
+        modal.addEventListener('hidden.bs.modal', function() {
+            // Clean up any remaining backdrops
+            var backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(function(backdrop) {
+                if (backdrop.parentNode) {
+                    backdrop.parentNode.removeChild(backdrop);
+                }
+            });
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        });
+    });
+});
+</script>
+{% endblock %}

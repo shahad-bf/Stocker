@@ -1,0 +1,828 @@
+{% extends 'dashboard/base.html' %}
+{% load humanize %}
+{% load crispy_forms_tags %}
+
+{% block title %}Products - Inventory Plus{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Fix for update stock button transparency issue */
+.btn-update-stock {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    display: inline-block !important;
+    visibility: visible !important;
+    background-color: #ffc107 !important;
+    border-color: #ffc107 !important;
+    color: #000 !important;
+    transition: all 0.15s ease-in-out !important;
+    position: relative !important;
+    z-index: 1000 !important;
+}
+
+.btn-update-stock:hover {
+    background-color: #e0a800 !important;
+    border-color: #d39e00 !important;
+    color: #000 !important;
+    opacity: 1 !important;
+    transform: translateY(-1px);
+}
+
+.btn-update-stock:focus,
+.btn-update-stock:active {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    background-color: #ffc107 !important;
+    border-color: #ffc107 !important;
+    color: #000 !important;
+}
+
+.btn-update-stock:disabled {
+    opacity: 0.6 !important;
+    pointer-events: none !important;
+}
+
+/* Force visibility for all buttons */
+.btn-group .btn-update-stock,
+.btn-group-sm .btn-update-stock {
+    display: inline-block !important;
+    visibility: visible !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <!-- Debug Info -->
+            <div class="alert alert-info mb-2">
+                <small>
+                    <strong>Debug:</strong> User: {{ user.username }}, 
+                    Authenticated: {{ user.is_authenticated|yesno:"Yes,No" }}, 
+                    Has Profile: {% if user.profile %}Yes{% else %}No{% endif %}, 
+                    {% if user.profile %}Role: {{ user.profile.role }}, Is Admin: {{ user.profile.is_admin|yesno:"Yes,No" }}{% endif %}
+                </small>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-0">
+                        <i class="bi bi-box me-2 text-primary"></i>
+                        Products
+                    </h1>
+                    <p class="text-muted mb-0">Manage your inventory products</p>
+                </div>
+                <div>
+                    <a href="{% url 'products:product_add' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i>Add Product
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="card mb-4 animate__animated animate__fadeInUp">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-search me-2"></i>
+                البحث والفلترة
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <!-- Search Box -->
+                <div class="col-md-4">
+                    <label for="query" class="form-label">البحث</label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" 
+                               class="form-control" 
+                               id="query" 
+                               name="query" 
+                               value="{{ request.GET.query }}"
+                               placeholder="ابحث بالاسم أو رمز المنتج...">
+                    </div>
+                </div>
+                
+                <!-- Category Filter -->
+                <div class="col-md-3">
+                    <label for="category" class="form-label">الفئة</label>
+                    <select class="form-select" id="category" name="category">
+                        <option value="">جميع الفئات</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" 
+                                {% if request.GET.category == cat.id|stringformat:"s" %}selected{% endif %}>
+                            {{ cat.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Stock Status Filter -->
+                <div class="col-md-3">
+                    <label for="stock_status" class="form-label">حالة المخزون</label>
+                    <select class="form-select" id="stock_status" name="stock_status">
+                        <option value="">جميع الحالات</option>
+                        <option value="high" {% if request.GET.stock_status == 'high' %}selected{% endif %}>
+                            مخزون عالي
+                        </option>
+                        <option value="low" {% if request.GET.stock_status == 'low' %}selected{% endif %}>
+                            مخزون منخفض
+                        </option>
+                        <option value="out" {% if request.GET.stock_status == 'out' %}selected{% endif %}>
+                            نفد المخزون
+                        </option>
+                    </select>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search me-1"></i>
+                            بحث
+                        </button>
+                        <a href="{% url 'products:product_list' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-arrow-clockwise me-1"></i>
+                            إعادة تعيين
+                        </a>
+                    </div>
+                </div>
+            </form>
+            
+            <!-- Quick Filter Badges -->
+            <div class="mt-3">
+                <small class="text-muted">فلترة سريعة:</small>
+                <div class="d-flex flex-wrap gap-2 mt-2">
+                    {% for cat in categories %}
+                    <a href="?category={{ cat.id }}" 
+                       class="badge bg-info text-decoration-none {% if request.GET.category == cat.id|stringformat:"s" %}bg-primary{% endif %}">
+                        {{ cat.name }}
+                        <span class="ms-1">({{ cat.get_products_count }})</span>
+                    </a>
+                    {% endfor %}
+                    
+                    <a href="?stock_status=low" 
+                       class="badge bg-warning text-dark text-decoration-none {% if request.GET.stock_status == 'low' %}bg-dark text-white{% endif %}">
+                        مخزون منخفض
+                    </a>
+                    <a href="?stock_status=out" 
+                       class="badge bg-danger text-decoration-none {% if request.GET.stock_status == 'out' %}bg-dark{% endif %}">
+                        نفد المخزون
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Active Filters Display -->
+            {% if request.GET.query or request.GET.category or request.GET.stock_status %}
+            <div class="mt-3 p-2 bg-light rounded">
+                <small class="text-muted">الفلاتر النشطة:</small>
+                <div class="d-flex flex-wrap gap-2 mt-1">
+                    {% if request.GET.query %}
+                    <span class="badge bg-secondary">
+                        البحث: "{{ request.GET.query }}"
+                        <a href="?{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.stock_status %}stock_status={{ request.GET.stock_status }}{% endif %}" 
+                           class="text-white ms-1">×</a>
+                    </span>
+                    {% endif %}
+                    
+                    {% if request.GET.category %}
+                    {% for cat in categories %}
+                        {% if cat.id|stringformat:"s" == request.GET.category %}
+                        <span class="badge bg-info">
+                            الفئة: {{ cat.name }}
+                            <a href="?{% if request.GET.query %}query={{ request.GET.query }}&{% endif %}{% if request.GET.stock_status %}stock_status={{ request.GET.stock_status }}{% endif %}" 
+                               class="text-white ms-1">×</a>
+                        </span>
+                        {% endif %}
+                    {% endfor %}
+                    {% endif %}
+                    
+                    {% if request.GET.stock_status %}
+                    <span class="badge bg-warning text-dark">
+                        الحالة: 
+                        {% if request.GET.stock_status == 'high' %}مخزون عالي
+                        {% elif request.GET.stock_status == 'low' %}مخزون منخفض
+                        {% elif request.GET.stock_status == 'out' %}نفد المخزون
+                        {% endif %}
+                        <a href="?{% if request.GET.query %}query={{ request.GET.query }}&{% endif %}{% if request.GET.category %}category={{ request.GET.category }}{% endif %}" 
+                           class="text-dark ms-1">×</a>
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Products Table -->
+    <div class="card animate__animated animate__fadeInUp animate__delay-1s">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-list me-2"></i>
+                قائمة المنتجات
+                {% if page_obj %}
+                    <span class="badge bg-primary">{{ page_obj.paginator.count }} منتج</span>
+                    {% if request.GET.query or request.GET.category or request.GET.stock_status %}
+                        <span class="badge bg-success">مفلترة</span>
+                    {% endif %}
+                {% endif %}
+            </h5>
+            
+            <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="btn btn-outline-secondary active" id="tableView">
+                    <i class="bi bi-table"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="cardView">
+                    <i class="bi bi-grid"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="card-body p-0">
+            {% if products %}
+                <!-- Table View -->
+                <div id="tableViewContent" class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Stock</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products %}
+                            <tr class="{% if product.is_low_stock %}table-warning{% elif product.is_out_of_stock %}table-danger{% endif %}">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if product.image %}
+                                            <img src="{{ product.image.url }}" 
+                                                 alt="{{ product.name }}" 
+                                                 class="rounded me-3" 
+                                                 style="width: 50px; height: 50px; object-fit: cover;">
+                                        {% else %}
+                                            <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center" 
+                                                 style="width: 50px; height: 50px;">
+                                                <i class="bi bi-image text-muted"></i>
+                                            </div>
+                                        {% endif %}
+                                        <div>
+                                            <h6 class="mb-0">{{ product.name }}</h6>
+                                            <small class="text-muted">SKU: {{ product.sku }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if product.category %}
+                                        <span class="badge bg-info">{{ product.category.name }}</span>
+                                    {% else %}
+                                        <span class="text-muted">No Category</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>{{ product.stock_quantity }} {{ product.unit }}</strong>
+                                        {% if product.is_out_of_stock %}
+                                            <br><span class="badge bg-danger">Out</span>
+                                        {% elif product.is_low_stock %}
+                                            <br><span class="badge bg-warning">Low</span>
+                                        {% else %}
+                                            <br><span class="badge bg-success">High</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <strong>{{ product.unit_price|floatformat:2 }} SAR</strong>
+                                    {% if product.cost_price %}
+                                        <br><small class="text-muted">Cost: {{ product.cost_price|floatformat:2 }} SAR</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if product.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    {% endif %}
+                                    {% if product.is_featured %}
+                                        <br><span class="badge bg-primary">Featured</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <!-- View Button (Always visible) -->
+                                        <a href="{% url 'products:product_detail' product.pk %}" 
+                                           class="btn btn-outline-info" 
+                                           title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        
+                                        <!-- Edit Button (For authenticated users) -->
+                                        {% if user.is_authenticated %}
+                                        <a href="{% url 'products:product_edit' product.pk %}" 
+                                           class="btn btn-outline-primary" 
+                                           title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        {% else %}
+                                        <!-- Debug: Not authenticated -->
+                                        {% endif %}
+                                        
+                                        <!-- Update Stock Button - Direct Link -->
+                                        <a href="{% url 'inventory:stock_adjust' product.pk %}" 
+                                           class="btn btn-warning btn-update-stock"
+                                           title="Update Stock"
+                                           style="opacity: 1 !important; pointer-events: auto !important; display: inline-block !important; visibility: visible !important;">
+                                            <i class="bi bi-arrow-up-down"></i>
+                                        </a>
+                                        <!-- Debug: User authenticated: {{ user.is_authenticated }}, Username: {{ user.username|default:'None' }} -->
+                                        
+                                        <!-- Delete Button (For admin users only) -->
+                                        {% if user.is_authenticated %}
+                                            {% if user.username == 'admin' %}
+                                            <button type="button" 
+                                                    class="btn btn-outline-danger btn-delete-product" 
+                                                    data-product-id="{{ product.pk }}"
+                                                    data-product-name="{{ product.name }}"
+                                                    title="حذف المنتج"
+                                                    style="display: inline-block !important;">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                            {% else %}
+                                            <!-- Debug: Not admin user -->
+                                            {% endif %}
+                                        {% else %}
+                                        <!-- Debug: Not authenticated for delete -->
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Card View (Hidden by default) -->
+                <div id="cardViewContent" class="row g-3 p-3" style="display: none;">
+                    {% for product in products %}
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card h-100 {% if product.is_low_stock %}border-warning{% elif product.is_out_of_stock %}border-danger{% endif %}">
+                            {% if product.image %}
+                                <img src="{{ product.image.url }}" 
+                                     class="card-img-top" 
+                                     alt="{{ product.name }}"
+                                     style="height: 200px; object-fit: cover;">
+                            {% else %}
+                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                                     style="height: 200px;">
+                                    <i class="bi bi-image display-1 text-muted"></i>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="card-body">
+                                <h5 class="card-title">{{ product.name }}</h5>
+                                <p class="card-text">
+                                    <small class="text-muted">SKU: {{ product.sku }}</small><br>
+                                    {% if product.category %}
+                                        <span class="badge bg-info">{{ product.category.name }}</span>
+                                    {% endif %}
+                                </p>
+                                
+                                <div class="row mb-2">
+                                    <div class="col-6">
+                                        <strong>{{ product.unit_price|floatformat:2 }} SAR</strong>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <strong>{{ product.stock_quantity }} {{ product.unit }}</strong>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {% if product.is_out_of_stock %}
+                                        <span class="badge bg-danger">Out</span>
+                                    {% elif product.is_low_stock %}
+                                        <span class="badge bg-warning">Low</span>
+                                    {% else %}
+                                        <span class="badge bg-success">High</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="card-footer">
+                                <div class="btn-group w-100" role="group">
+                                    <a href="{% url 'products:product_detail' product.pk %}" 
+                                       class="btn btn-outline-info btn-sm">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'products:product_edit' product.pk %}" 
+                                       class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'inventory:stock_adjust' product.pk %}" 
+                                       class="btn btn-warning btn-sm btn-update-stock"
+                                       title="Update Stock"
+                                       style="opacity: 1 !important; pointer-events: auto !important; display: inline-block !important; visibility: visible !important;">
+                                        <i class="bi bi-arrow-up-down"></i>
+                                    </a>
+                                    
+                                    <!-- Delete Button for Card View -->
+                                    {% if user.is_authenticated and user.username == 'admin' %}
+                                    <button type="button" 
+                                            class="btn btn-outline-danger btn-sm btn-delete-product" 
+                                            data-product-id="{{ product.pk }}"
+                                            data-product-name="{{ product.name }}"
+                                            title="حذف المنتج">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    {% if request.GET.query or request.GET.category or request.GET.stock_status %}
+                        <i class="bi bi-search display-1 text-muted mb-3"></i>
+                        <h4 class="text-muted">لا توجد منتجات تطابق البحث</h4>
+                        <p class="text-muted">جرب تعديل معايير البحث أو الفلاتر للحصول على نتائج أفضل.</p>
+                        <div class="d-flex gap-2 justify-content-center">
+                            <a href="{% url 'products:product_list' %}" class="btn btn-outline-primary">
+                                <i class="bi bi-arrow-clockwise me-2"></i>إعادة تعيين البحث
+                            </a>
+                            <a href="{% url 'products:product_add' %}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-2"></i>إضافة منتج جديد
+                            </a>
+                        </div>
+                    {% else %}
+                        <i class="bi bi-inbox display-1 text-muted mb-3"></i>
+                        <h4 class="text-muted">لا توجد منتجات</h4>
+                        <p class="text-muted">ابدأ بإضافة منتجك الأول لإدارة المخزون.</p>
+                        <a href="{% url 'products:product_add' %}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>إضافة أول منتج
+                        </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="d-flex justify-content-center mt-4">
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if request.GET.query %}query={{ request.GET.query }}&{% endif %}{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.stock_status %}stock_status={{ request.GET.stock_status }}&{% endif %}page=1">First</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if request.GET.query %}query={{ request.GET.query }}&{% endif %}{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.stock_status %}stock_status={{ request.GET.stock_status }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
+                    </li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                </li>
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if request.GET.query %}query={{ request.GET.query }}&{% endif %}{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.stock_status %}stock_status={{ request.GET.stock_status }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if request.GET.query %}query={{ request.GET.query }}&{% endif %}{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.stock_status %}stock_status={{ request.GET.stock_status }}&{% endif %}page={{ page_obj.paginator.num_pages }}">Last</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Stock Update Modals -->
+{% for product in products %}
+<div class="modal fade" id="stockModal{{ product.pk }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Stock - {{ product.name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'inventory:stock_adjust' product.pk %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Current Stock: <strong>{{ product.stock_quantity }} {{ product.unit }}</strong></label>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quantity{{ product.pk }}" class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="quantity{{ product.pk }}" name="quantity" required min="0">
+                    </div>
+                    <div class="mb-3">
+                        <label for="movement_type{{ product.pk }}" class="form-label">Movement Type</label>
+                        <select class="form-select" id="movement_type{{ product.pk }}" name="movement_type" required>
+                            <option value="in">Stock In (+)</option>
+                            <option value="out">Stock Out (-)</option>
+                            <option value="adjustment">Adjustment (Set to)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes{{ product.pk }}" class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" id="notes{{ product.pk }}" name="notes" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Stock</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<script>
+// View toggle functionality
+document.getElementById('tableView').addEventListener('click', function() {
+    document.getElementById('tableViewContent').style.display = 'block';
+    document.getElementById('cardViewContent').style.display = 'none';
+    this.classList.add('active');
+    document.getElementById('cardView').classList.remove('active');
+});
+
+document.getElementById('cardView').addEventListener('click', function() {
+    document.getElementById('tableViewContent').style.display = 'none';
+    document.getElementById('cardViewContent').style.display = 'block';
+    this.classList.add('active');
+    document.getElementById('tableView').classList.remove('active');
+});
+
+// Simple function to open stock modal
+function openStockModal(productId) {
+    console.log('Opening stock modal for product:', productId);
+    
+    const modal = document.querySelector('#stockModal' + productId);
+    if (modal) {
+        console.log('Modal found, opening...');
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+    } else {
+        console.error('Modal not found for product:', productId);
+        alert('خطأ: لا يمكن العثور على نافذة تحديث المخزون');
+    }
+}
+
+// Fix modal and button issues
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Page loaded, checking buttons...');
+    
+    // Force show all update stock buttons
+    document.querySelectorAll('.btn-update-stock').forEach(function(btn, index) {
+        console.log('Processing button', index + 1);
+        
+        // Force all visibility styles
+        btn.style.display = 'inline-block';
+        btn.style.visibility = 'visible';
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
+        btn.style.backgroundColor = '#ffc107';
+        btn.style.borderColor = '#ffc107';
+        btn.style.color = '#000';
+        btn.disabled = false;
+    });
+    
+    console.log('Found and processed', document.querySelectorAll('.btn-update-stock').length, 'update stock buttons');
+    
+    // Setup delete buttons
+    setupDeleteButtons();
+    
+    // Ensure modals work properly
+    var modals = document.querySelectorAll('.modal');
+    modals.forEach(function(modal) {
+        modal.addEventListener('show.bs.modal', function() {
+            // Fix z-index issues
+            this.style.zIndex = '1055';
+            var backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.style.zIndex = '1054';
+            }
+        });
+        
+        modal.addEventListener('hidden.bs.modal', function() {
+            // Clean up any remaining backdrops
+            var backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(function(backdrop) {
+                if (backdrop.parentNode) {
+                    backdrop.parentNode.removeChild(backdrop);
+                }
+            });
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        });
+    });
+});
+
+// Function to setup delete buttons
+function setupDeleteButtons() {
+    document.querySelectorAll('.btn-delete-product').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const productId = this.getAttribute('data-product-id');
+            const productName = this.getAttribute('data-product-name');
+            
+            // Show confirmation dialog
+            if (confirm(`هل أنت متأكد من حذف المنتج "${productName}"؟\n\nسيتم إلغاء تفعيل المنتج بدلاً من حذفه نهائياً.`)) {
+                deleteProduct(productId, productName, this);
+            }
+        });
+    });
+}
+
+// Function to delete product via AJAX
+function deleteProduct(productId, productName, buttonElement) {
+    // Disable button during request
+    buttonElement.disabled = true;
+    buttonElement.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+    
+    // Get CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? 
+                     document.querySelector('[name=csrfmiddlewaretoken]').value : 
+                     getCookie('csrftoken');
+    
+    fetch(`/products/api/${productId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            showMessage(data.message, 'success');
+            
+            // Remove the product row/card from the page
+            const productRow = buttonElement.closest('tr') || buttonElement.closest('.col-lg-4');
+            if (productRow) {
+                productRow.style.transition = 'opacity 0.5s ease';
+                productRow.style.opacity = '0';
+                setTimeout(() => {
+                    productRow.remove();
+                }, 500);
+            }
+        } else {
+            // Show error message
+            showMessage(data.message, 'error');
+            
+            // Re-enable button
+            buttonElement.disabled = false;
+            buttonElement.innerHTML = '<i class="bi bi-trash"></i>';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('حدث خطأ أثناء حذف المنتج', 'error');
+        
+        // Re-enable button
+        buttonElement.disabled = false;
+        buttonElement.innerHTML = '<i class="bi bi-trash"></i>';
+    });
+}
+
+// Function to show messages
+function showMessage(message, type) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const icon = type === 'success' ? 'check-circle' : 'exclamation-triangle';
+    
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            <i class="bi bi-${icon} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // Insert alert at the top of the container
+    const container = document.querySelector('.container-fluid');
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = alertHtml;
+    container.insertBefore(tempDiv.firstElementChild, container.firstElementChild);
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        const alert = container.querySelector('.alert');
+        if (alert) {
+            alert.remove();
+        }
+    }, 5000);
+}
+
+// Function to get CSRF cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Auto-submit form when filters change
+document.addEventListener('DOMContentLoaded', function() {
+    const categorySelect = document.getElementById('category');
+    const stockStatusSelect = document.getElementById('stock_status');
+    const queryInput = document.getElementById('query');
+    const form = document.querySelector('form[method="get"]');
+    
+    // Auto-submit on filter change
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function() {
+            form.submit();
+        });
+    }
+    
+    if (stockStatusSelect) {
+        stockStatusSelect.addEventListener('change', function() {
+            form.submit();
+        });
+    }
+    
+    // Search on Enter key
+    if (queryInput) {
+        queryInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                form.submit();
+            }
+        });
+        
+        // Optional: Auto-search after typing (with delay)
+        let searchTimeout;
+        queryInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                if (this.value.length >= 2 || this.value.length === 0) {
+                    form.submit();
+                }
+            }, 1000); // Search after 1 second of no typing
+        });
+    }
+    
+    // Highlight active filters
+    const activeFilters = document.querySelectorAll('.badge.bg-primary, .badge.bg-dark');
+    activeFilters.forEach(badge => {
+        badge.style.animation = 'pulse 2s infinite';
+    });
+});
+
+// Add pulse animation for active filters
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+    }
+    
+    .badge:hover {
+        transform: scale(1.05);
+        transition: transform 0.2s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .search-highlight {
+        background-color: #fff3cd;
+        border: 2px solid #ffc107;
+        animation: highlight 3s ease-out;
+    }
+    
+    @keyframes highlight {
+        0% { background-color: #fff3cd; }
+        100% { background-color: transparent; }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

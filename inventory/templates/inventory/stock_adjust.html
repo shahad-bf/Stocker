@@ -1,0 +1,262 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Stock Adjustment - {{ product.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.stock-form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.current-stock {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 15px;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.stock-number {
+    font-size: 3rem;
+    font-weight: bold;
+    margin: 0.5rem 0;
+}
+
+.movement-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.movement-btn {
+    flex: 1;
+    padding: 1rem;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.movement-btn.active {
+    border-color: #007bff;
+    background: rgba(0, 123, 255, 0.1);
+}
+
+.btn-in {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.btn-out {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+.btn-adjust {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1><i class="bi bi-arrow-up-down me-2"></i>Stock Adjustment</h1>
+                    <p class="text-muted">{{ product.name }} - SKU: {{ product.sku }}</p>
+                </div>
+                <a href="{% url 'products:product_list' %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Back to Products
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="stock-form">
+        <!-- Current Stock Display -->
+        <div class="current-stock">
+            <h3>Current Stock</h3>
+            <div class="stock-number">{{ product.stock_quantity }}</div>
+            <p>{{ product.get_unit_display }}</p>
+            {% if product.is_out_of_stock %}
+                <span class="badge bg-danger">Out of Stock</span>
+            {% elif product.is_low_stock %}
+                <span class="badge bg-warning">Low Stock</span>
+            {% else %}
+                <span class="badge bg-success">Available</span>
+            {% endif %}
+        </div>
+
+        <!-- Update Form -->
+        <div class="card">
+            <div class="card-body">
+                                    <!-- Display any error messages -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" id="stockForm">
+                        {% csrf_token %}
+                    
+                    <!-- Movement Type Selection -->
+                    <div class="mb-4">
+                        <label class="form-label">Movement Type</label>
+                        <div class="movement-buttons">
+                            <div class="movement-btn btn-in" data-type="in">
+                                <i class="bi bi-plus-circle fs-2 d-block mb-2"></i>
+                                <strong>Stock In</strong>
+                                <small class="d-block">Add to inventory</small>
+                            </div>
+                            <div class="movement-btn btn-out" data-type="out">
+                                <i class="bi bi-dash-circle fs-2 d-block mb-2"></i>
+                                <strong>Stock Out</strong>
+                                <small class="d-block">Remove from inventory</small>
+                            </div>
+                            <div class="movement-btn btn-adjust" data-type="adjustment">
+                                <i class="bi bi-arrow-clockwise fs-2 d-block mb-2"></i>
+                                <strong>Stock Adjustment</strong>
+                                <small class="d-block">Set new value</small>
+                            </div>
+                        </div>
+                        <input type="hidden" name="movement_type" id="movement_type" required>
+                    </div>
+
+                    <!-- Quantity Input -->
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity</label>
+                        <input type="number" class="form-control form-control-lg" id="quantity" name="quantity" 
+                               required min="0" placeholder="Enter quantity">
+                        <div class="form-text" id="quantityHelp"></div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="mb-4">
+                        <label for="notes" class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                  placeholder="Add notes about this movement..."></textarea>
+                    </div>
+
+                    <!-- Preview -->
+                    <div class="alert alert-info d-none" id="preview">
+                        <h6>Preview Changes:</h6>
+                        <div id="previewText"></div>
+                    </div>
+
+                    <!-- Submit Buttons -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'products:product_list' %}" class="btn btn-secondary me-md-2">
+                            <i class="bi bi-x-circle me-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" disabled>
+                            <i class="bi bi-check-circle me-2"></i>Update Stock
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const movementButtons = document.querySelectorAll('.movement-btn');
+    const movementTypeInput = document.getElementById('movement_type');
+    const quantityInput = document.getElementById('quantity');
+    const quantityHelp = document.getElementById('quantityHelp');
+    const preview = document.getElementById('preview');
+    const previewText = document.getElementById('previewText');
+    const submitBtn = document.getElementById('submitBtn');
+    const currentStock = parseInt('{{ product.stock_quantity }}');
+    
+    // Movement type selection
+    movementButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            movementButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            movementTypeInput.value = this.dataset.type;
+            updateHelp();
+            updatePreview();
+            checkFormValid();
+        });
+    });
+    
+    // Quantity input
+    quantityInput.addEventListener('input', function() {
+        updatePreview();
+        checkFormValid();
+    });
+    
+    function updateHelp() {
+        const type = movementTypeInput.value;
+        let helpText = '';
+        
+        switch(type) {
+            case 'in':
+                helpText = 'This quantity will be added to current stock';
+                break;
+            case 'out':
+                helpText = 'This quantity will be removed from current stock';
+                break;
+            case 'adjustment':
+                helpText = 'Stock will be adjusted to this value';
+                break;
+        }
+        
+        quantityHelp.textContent = helpText;
+    }
+    
+    function updatePreview() {
+        const type = movementTypeInput.value;
+        const quantity = parseInt(quantityInput.value) || 0;
+        
+        if (!type || !quantity) {
+            preview.classList.add('d-none');
+            return;
+        }
+        
+        let newStock = 0;
+        let operation = '';
+        
+        switch(type) {
+            case 'in':
+                newStock = currentStock + quantity;
+                operation = `${currentStock} + ${quantity} = ${newStock}`;
+                break;
+            case 'out':
+                newStock = Math.max(0, currentStock - quantity);
+                operation = `${currentStock} - ${quantity} = ${newStock}`;
+                if (currentStock - quantity < 0) {
+                    operation += ' (Adjusted to avoid negative)';
+                }
+                break;
+            case 'adjustment':
+                newStock = quantity;
+                operation = `New Stock: ${newStock}`;
+                break;
+        }
+        
+        previewText.innerHTML = `<strong>${operation}</strong><br>Stock after update: <span class="badge bg-primary">${newStock}</span>`;
+        preview.classList.remove('d-none');
+    }
+    
+    function checkFormValid() {
+        const hasType = movementTypeInput.value;
+        const hasQuantity = quantityInput.value && parseInt(quantityInput.value) > 0;
+        
+        submitBtn.disabled = !(hasType && hasQuantity);
+    }
+});
+</script>
+{% endblock %}
